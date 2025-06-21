@@ -29,11 +29,32 @@ video_metadata = {
     "snippet": {
         "title": "🌟 Inspirational Quote #Shorts",
         "description": "Automatically generated inspirational quote video.",
-        "tags": ["inspiration", "motivation", "shorts", "quotes"],
+        "tags": [
+                  "shorts",
+                  "quotes",
+                  "inspirationalquotes",
+                  "motivationalquotes",
+                  "lifelessons",
+                  "positivity",
+                  "selfimprovement",
+                  "dailyquotes",
+                  "successquotes",
+                  "quoteoftheday",
+                  "mindset",
+                  "motivation",
+                  "inspiration",
+                  "personaldevelopment",
+                  "wisewords",
+                  "selfgrowth",
+                  "mentalhealth",
+                  "goodvibes",
+                  "wordsoftheday",
+                  "selflove"
+                ],
         "categoryId": "22"  # People & Blogs
     },
     "status": {
-        "privacyStatus": "private"  # Change to "public" after testing
+        "privacyStatus": "public"  # Change to "public" after testing
     }
 }
 

@@ -99,6 +99,7 @@ def add_background_music(clip, music_path):
 
 # 🔹 Step 5: Overlay quote text
 def add_text_overlay(clip, quote):
+    print("🔍 ImageMagick path:", mpy_config.IMAGEMAGICK_BINARY)
     txt = TextClip(
         quote,
         fontsize=50,

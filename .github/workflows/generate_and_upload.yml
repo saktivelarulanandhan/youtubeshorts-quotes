@@ -19,18 +19,27 @@ jobs:
           python-version: '3.11'
       - name: 🧙 Install ImageMagick
         run: sudo apt-get install -y imagemagick
-      - name: 🔓 Patch ImageMagick policy to allow 'caption:' and '@'
+      - name: 🔓 Patch ImageMagick policy (both v6 & v7)
         run: |
-          sudo sed -i 's@<policy domain="coder" rights="none" pattern="PDF" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
-          sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
-          sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
+          for version in 6 7; do
+            POLICY_PATH="/etc/ImageMagick-$version/policy.xml"
+            if [ -f "$POLICY_PATH" ]; then
+              echo "🔧 Patching $POLICY_PATH..."
+              sudo sed -i 's@<policy domain="coder" rights="none" pattern="PDF" />@<!-- disabled -->@' "$POLICY_PATH" || true
+              sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- disabled -->@' "$POLICY_PATH" || true
+              sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- disabled -->@' "$POLICY_PATH" || true
+            else
+              echo "⚠️ No policy file at $POLICY_PATH"
+            fi
+          done
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg imagemagick
           pip install --upgrade pip
           pip install -r requirements.txt
-
+      - name: 🕵️ Print ImageMagick policy path
+        run: convert -list policy
       - name: 🔐 Restore YouTube API secrets
         run: |
           echo "${{ secrets.CLIENT_SECRET }}" > client_secret.json

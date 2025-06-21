@@ -1,0 +1,45 @@
+name: 🎬 Generate & Upload YouTube Shorts
+
+on:
+  schedule:
+    - cron: '30 0 * * *' # Runs at 6:00 AM IST (00:30 UTC)
+  workflow_dispatch:
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          sudo apt update
+          sudo apt install -y ffmpeg imagemagick
+
+      - name: 🔓 Restore Secrets
+        run: |
+          echo "${{ secrets.CLIENT_SECRET }}" > client_secret.json
+          echo "${{ secrets.TOKEN_JSON }}" > token.json
+
+      - name: 🎬 Generate Shorts
+        run: python main.py
+
+      - name: ⬆️ Upload to YouTube
+        run: |
+          pip install youtube-upload
+          youtube-upload \
+            --title="Daily Quote #$(date +'%Y-%m-%d')" \
+            --description="A motivational quote every day 🌞 #shorts" \
+            --category=22 \
+            --privacy=public \
+            --client-secrets=client_secret.json \
+            --credentials-file=token.json \
+            short_quote.mp4

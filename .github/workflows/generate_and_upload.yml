@@ -17,42 +17,47 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
       - name: 🧙 Install ImageMagick
         run: sudo apt-get install -y imagemagick
-      - name: 🔓 Patch ImageMagick 6 policy to allow caption/@file
+
+      - name: 🔓 Patch ImageMagick 6 policy to allow TextClip and caption
         run: |
           POLICY_FILE="/etc/ImageMagick-6/policy.xml"
           echo "🛠 Patching $POLICY_FILE..."
-          sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
-          sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
-      - name: 🔓 Unblock ImageMagick's '@*' policy for TextClip
-        run: |
-          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
-          echo "🛠 Patching $POLICY_FILE..."
-          sudo sed -i 's@<policy domain="path" rights="none" pattern="@*"\/>@<!-- Unblocked for MoviePy: <policy domain="path" rights="none" pattern="@*" /> -->@' "$POLICY_FILE"
-          echo "✅ Patch complete. Showing the updated line:"
-          grep '@\*' "$POLICY_FILE" || true
+
+          # Unblock '@*' path pattern
+          sudo sed -i 's|<policy domain="path" rights="none" pattern="@\*" />|<!-- Unblocked for MoviePy -->|' "$POLICY_FILE"
+
+          # Unblock LABEL coder
+          sudo sed -i 's|<policy domain="coder" rights="none" pattern="LABEL" />|<!-- Unblocked LABEL for MoviePy -->|' "$POLICY_FILE"
+
+          # Unblock caption coder (used by method='caption')
+          sudo sed -i 's|<policy domain="coder" rights="none" pattern="CAPTION" />|<!-- Unblocked CAPTION for MoviePy -->|' "$POLICY_FILE"
+
       - name: 🕵️ Confirm patched ImageMagick policy
-        run: grep '@\*' /etc/ImageMagick-6/policy.xml || echo "✅ No block for @*"
-      - name: 🧪 Confirm patched policy
-        run: cat /etc/ImageMagick-6/policy.xml
+        run: grep -E "LABEL|CAPTION|@\\*" /etc/ImageMagick-6/policy.xml || echo "✅ No blocking patterns found"
+
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg imagemagick
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: 🕵️ Print ImageMagick policy path
-        run: convert -list policy
+
       - name: 🔐 Restore YouTube API secrets
         run: |
           echo "${{ secrets.CLIENT_SECRET }}" > client_secret.json
           echo "${{ secrets.TOKEN_JSON }}" > token.json
-      - name: 🧪 Check ImageMagick
+
+      - name: 🧪 Check ImageMagick version
         run: convert --version
+
+      - name: 🕵️ Print active ImageMagick policies
+        run: convert -list policy || echo "✅ No active policy blocks"
+
       - name: 🎬 Generate video
         run: python main.py
 
       - name: ⬆️ Upload video to YouTube
-        run: |
-          python upload_to_youtube.py
+        run: python upload_to_youtube.py

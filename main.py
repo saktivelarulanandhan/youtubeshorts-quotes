@@ -8,7 +8,15 @@ import urllib3
 from moviepy.video.fx.all import loop as fx_loop
 from moviepy.editor import AudioFileClip
 import moviepy.config as mpy_config
-mpy_config.change_settings({"IMAGEMAGICK_BINARY": "C:/Program Files/ImageMagick-7.1.1-Q16/magick.exe"})
+import platform
+import moviepy.config as mpy_config
+
+# Set ImageMagick path based on OS
+if platform.system() == "Windows":
+    mpy_config.change_settings({"IMAGEMAGICK_BINARY": "C:/Program Files/ImageMagick-7.1.1-Q16/magick.exe"})
+else:
+    mpy_config.change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
+
 
 
 # Suppress warnings if using verify=False (TEMP)

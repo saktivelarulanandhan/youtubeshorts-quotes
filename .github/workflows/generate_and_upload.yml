@@ -25,6 +25,15 @@ jobs:
           echo "🛠 Patching $POLICY_FILE..."
           sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
           sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
+      - name: 🔓 Unblock ImageMagick's '@*' policy for TextClip
+        run: |
+          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
+          echo "🛠 Patching $POLICY_FILE..."
+          sudo sed -i 's@<policy domain="path" rights="none" pattern="@*"\/>@<!-- Unblocked for MoviePy: <policy domain="path" rights="none" pattern="@*" /> -->@' "$POLICY_FILE"
+          echo "✅ Patch complete. Showing the updated line:"
+          grep '@\*' "$POLICY_FILE" || true
+      - name: 🕵️ Confirm patched ImageMagick policy
+        run: grep '@\*' /etc/ImageMagick-6/policy.xml || echo "✅ No block for @*"
       - name: 🧪 Confirm patched policy
         run: cat /etc/ImageMagick-6/policy.xml
       - name: 📦 Install dependencies

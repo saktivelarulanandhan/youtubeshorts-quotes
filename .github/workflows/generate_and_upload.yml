@@ -19,19 +19,14 @@ jobs:
           python-version: '3.11'
       - name: 🧙 Install ImageMagick
         run: sudo apt-get install -y imagemagick
-      - name: 🔓 Patch ImageMagick policy (both v6 & v7)
+      - name: 🔓 Patch ImageMagick 6 policy to allow caption/@file
         run: |
-          for version in 6 7; do
-            POLICY_PATH="/etc/ImageMagick-$version/policy.xml"
-            if [ -f "$POLICY_PATH" ]; then
-              echo "🔧 Patching $POLICY_PATH..."
-              sudo sed -i 's@<policy domain="coder" rights="none" pattern="PDF" />@<!-- disabled -->@' "$POLICY_PATH" || true
-              sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- disabled -->@' "$POLICY_PATH" || true
-              sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- disabled -->@' "$POLICY_PATH" || true
-            else
-              echo "⚠️ No policy file at $POLICY_PATH"
-            fi
-          done
+          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
+          echo "🛠 Patching $POLICY_FILE..."
+          sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
+          sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- removed for MoviePy -->@' "$POLICY_FILE" || true
+      - name: 🧪 Confirm patched policy
+        run: cat /etc/ImageMagick-6/policy.xml
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update

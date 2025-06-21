@@ -1,78 +1,86 @@
+import os
+import json
+from datetime import datetime
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import json
-import os
+from google.oauth2.credentials import Credentials
 
-# Load client credentials and token
+# === Load OAuth Credentials ===
 with open("client_secret.json", "r") as f:
-    content = f.read()
-    print(content)  # Debug only, don't use in production
-    client_secrets = json.loads(content)
+    client_secrets = json.load(f)
 
 with open("token.json") as f:
     credentials_dict = json.load(f)
 
-from google.oauth2.credentials import Credentials
-
 credentials = Credentials(
-    token=credentials_dict['token'],
-    refresh_token=credentials_dict['refresh_token'],
-    token_uri=client_secrets['installed']['token_uri'],
-    client_id=client_secrets['installed']['client_id'],
-    client_secret=client_secrets['installed']['client_secret']
+    token=credentials_dict["token"],
+    refresh_token=credentials_dict["refresh_token"],
+    token_uri=client_secrets["installed"]["token_uri"],
+    client_id=client_secrets["installed"]["client_id"],
+    client_secret=client_secrets["installed"]["client_secret"]
 )
 
 youtube = build("youtube", "v3", credentials=credentials)
 
-# Set video metadata
+# === Detect quote from file or fallback ===
+quote_file = "quote.txt"  # Optional: main.py can save quote to this
+if os.path.exists(quote_file):
+    with open(quote_file, "r", encoding="utf-8") as f:
+        quote_text = f.read().strip()
+else:
+    quote_text = "Here’s your daily dose of inspiration! 💡"
+
+today = datetime.now().strftime("%B %d, %Y")
+
+# === Metadata ===
+title = f"🌟 {quote_text[:80]} | #Shorts"
+description = f"""{quote_text}
+
+🎯 Stay inspired every day with a new quote.
+💬 What does this quote mean to you? Comment below!
+
+👉 Subscribe for more daily motivation.
+#motivation #quotes #shorts #inspiration #positivity #mindset
+"""
+
+tags = [
+    "shorts", "quotes", "motivationalquotes", "lifelessons", "positivity",
+    "selfimprovement", "dailyquotes", "successquotes", "quoteoftheday",
+    "mindset", "motivation", "inspiration", "selfgrowth", "wisewords",
+    "goodvibes", "wordsoftheday", "selflove", "selfcare", "growthmindset", "viralshorts"
+]
+
 video_metadata = {
     "snippet": {
-        "title": "🌟 Inspirational Quote #Shorts",
-        "description": "Automatically generated inspirational quote video.",
-        "tags": [
-                  "shorts",
-                  "quotes",
-                  "inspirationalquotes",
-                  "motivationalquotes",
-                  "lifelessons",
-                  "positivity",
-                  "selfimprovement",
-                  "dailyquotes",
-                  "successquotes",
-                  "quoteoftheday",
-                  "mindset",
-                  "motivation",
-                  "inspiration",
-                  "personaldevelopment",
-                  "wisewords",
-                  "selfgrowth",
-                  "mentalhealth",
-                  "goodvibes",
-                  "wordsoftheday",
-                  "selflove"
-                ],
+        "title": title,
+        "description": description,
+        "tags": tags,
         "categoryId": "22"  # People & Blogs
     },
     "status": {
-        "privacyStatus": "public"  # Change to "public" after testing
+        "privacyStatus": "public"
     }
 }
 
-# Upload local file
+# === Upload ===
 video_file = "short_quote.mp4"
-media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype="video/*")
+if not os.path.exists(video_file):
+    raise FileNotFoundError(f"❌ Video file not found: {video_file}")
 
-request = youtube.videos().insert(
+media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype="video/*")
+upload_request = youtube.videos().insert(
     part="snippet,status",
     body=video_metadata,
     media_body=media
 )
 
+print("🚀 Starting upload...")
 response = None
 while response is None:
-    status, response = request.next_chunk()
+    status, response = upload_request.next_chunk()
     if status:
-        print(f"Uploading... {int(status.progress() * 100)}%")
+        print(f"📤 Uploading... {int(status.progress() * 100)}%")
 
 print("✅ Upload complete!")
 print(f"🎥 Video ID: {response['id']}")
+print(f"🔗 Watch at: https://www.youtube.com/watch?v={response['id']}")

@@ -1,72 +1,55 @@
-import os
-import json
-import google.auth
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+import json
+import os
 
-# Scopes required for uploading video
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# Load client credentials and token
+with open("client_secret.json") as f:
+    client_secrets = json.load(f)
 
-def authenticate_youtube():
-    creds = None
+with open("token.json") as f:
+    credentials_dict = json.load(f)
 
-    if os.path.exists("token.json"):
-        with open("token.json", "r") as token:
-            creds = google.oauth2.credentials.Credentials.from_authorized_user_info(json.load(token), SCOPES)
+from google.oauth2.credentials import Credentials
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+credentials = Credentials(
+    token=credentials_dict['token'],
+    refresh_token=credentials_dict['refresh_token'],
+    token_uri=client_secrets['installed']['token_uri'],
+    client_id=client_secrets['installed']['client_id'],
+    client_secret=client_secrets['installed']['client_secret']
+)
 
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+youtube = build("youtube", "v3", credentials=credentials)
 
-    return build("youtube", "v3", credentials=creds)
-
-def upload_video(file_path, title, description, tags=None, categoryId="22", privacyStatus="private"):
-    youtube = authenticate_youtube()
-
-    request_body = {
-        "snippet": {
-            "title": title,
-            "description": description,
-            "tags": tags or [],
-            "categoryId": categoryId  # "22" is for People & Blogs
-        },
-        "status": {
-            "privacyStatus": privacyStatus,
-            "selfDeclaredMadeForKids": False
-        }
+# Set video metadata
+video_metadata = {
+    "snippet": {
+        "title": "🌟 Inspirational Quote #Shorts",
+        "description": "Automatically generated inspirational quote video.",
+        "tags": ["inspiration", "motivation", "shorts", "quotes"],
+        "categoryId": "22"  # People & Blogs
+    },
+    "status": {
+        "privacyStatus": "private"  # Change to "public" after testing
     }
+}
 
-    media = MediaFileUpload(file_path, chunksize=-1, resumable=True, mimetype="video/*")
+# Upload local file
+video_file = "short_quote.mp4"
+media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype="video/*")
 
-    print("📤 Uploading to YouTube...")
-    request = youtube.videos().insert(
-        part="snippet,status",
-        body=request_body,
-        media_body=media
-    )
+request = youtube.videos().insert(
+    part="snippet,status",
+    body=video_metadata,
+    media_body=media
+)
 
-    response = None
-    while response is None:
-        status, response = request.next_chunk()
-        if status:
-            print(f"⏳ Upload progress: {int(status.progress() * 100)}%")
+response = None
+while response is None:
+    status, response = request.next_chunk()
+    if status:
+        print(f"Uploading... {int(status.progress() * 100)}%")
 
-    print("✅ Upload complete.")
-    print("🎥 Video ID:", response["id"])
-
-if __name__ == "__main__":
-    upload_video(
-        file_path="short_quote.mp4",
-        title="🌟 Inspiring Quote of the Day #shorts",
-        description="A daily dose of inspiration! #motivationalquotes #shorts",
-        tags=["inspiration", "quotes", "shorts"],
-        privacyStatus="public"  # or "private"/"unlisted"
-    )
+print("✅ Upload complete!")
+print(f"🎥 Video ID: {response['id']}")

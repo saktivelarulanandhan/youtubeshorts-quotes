@@ -19,6 +19,11 @@ jobs:
           python-version: '3.11'
       - name: 🧙 Install ImageMagick
         run: sudo apt-get install -y imagemagick
+      - name: 🔓 Patch ImageMagick policy to allow 'caption:' and '@'
+        run: |
+          sudo sed -i 's@<policy domain="coder" rights="none" pattern="PDF" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
+          sudo sed -i 's@<policy domain="coder" rights="none" pattern="LABEL" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
+          sudo sed -i 's@<policy domain="path" rights="none" pattern="@\*" />@<!-- disabled -->@' /etc/ImageMagick-6/policy.xml || true
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update

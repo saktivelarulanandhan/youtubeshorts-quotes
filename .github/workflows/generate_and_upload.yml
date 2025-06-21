@@ -55,7 +55,7 @@ jobs:
         run: convert -list policy || echo "✅ No active policy blocks"
 
       - name: 🎬 Generate video (if needed)
-        run: python main.py
+        run: python upload_to_youtube.py
         # 💡 Comment this out if you're using a prebuilt video file
 
       - name: ⬆️ Upload video to YouTube

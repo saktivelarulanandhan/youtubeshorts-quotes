@@ -24,20 +24,19 @@ jobs:
       - name: 🔓 Patch ImageMagick 6 policy to allow TextClip and caption
         run: |
           POLICY_FILE="/etc/ImageMagick-6/policy.xml"
-          echo "🛠 Patching $POLICY_FILE..."
-
-          # Unblock '@*' path pattern
-          sudo sed -i 's|<policy domain="path" rights="none" pattern="@\*" />|<!-- Unblocked for MoviePy -->|' "$POLICY_FILE"
-
-          # Unblock LABEL coder
-          sudo sed -i 's|<policy domain="coder" rights="none" pattern="LABEL" />|<!-- Unblocked LABEL for MoviePy -->|' "$POLICY_FILE"
-
-          # Unblock caption coder (used by method='caption')
-          sudo sed -i 's|<policy domain="coder" rights="none" pattern="CAPTION" />|<!-- Unblocked CAPTION for MoviePy -->|' "$POLICY_FILE"
-
-      - name: 🕵️ Confirm patched ImageMagick policy
-        run: grep -E "LABEL|CAPTION|@\\*" /etc/ImageMagick-6/policy.xml || echo "✅ No blocking patterns found"
-
+          echo "🛠 Overwriting $POLICY_FILE with MoviePy-safe settings"
+          sudo tee "$POLICY_FILE" > /dev/null <<EOF
+          <policymap>
+            <policy domain="resource" name="disk" value="2GiB"/>
+            <policy domain="resource" name="map" value="2048MiB"/>
+            <policy domain="resource" name="memory" value="1024MiB"/>
+            <policy domain="resource" name="area" value="256MP"/>
+            <policy domain="resource" name="width" value="32KP"/>
+            <policy domain="resource" name="height" value="32KP"/>
+            <!-- 🔓 Unblock @*, LABEL, CAPTION -->
+            <!-- nothing is blocked now -->
+          </policymap>
+          EOF
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update

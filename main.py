@@ -9,7 +9,6 @@ from moviepy.video.fx.all import loop as fx_loop
 from moviepy.editor import AudioFileClip
 import moviepy.config as mpy_config
 import platform
-import moviepy.config as mpy_config
 
 # Set ImageMagick path based on OS
 if platform.system() == "Windows":
@@ -26,7 +25,11 @@ PEXELS_API_KEY = "krdAD3gKcTPVenfesZWX3dbnI7nzK2vyQoFiMgFYtNJqe5WnJl1eOyx4"
 def get_quote():
     res = requests.get("https://api.quotable.io/random", verify=False)
     data = res.json()
-    return f"{data['content']} — {data['author']}"
+    quote = f"{data['content']} — {data['author']}"
+    # Save to file for title/description use
+    with open("quote.txt", "w", encoding="utf-8") as f:
+        f.write(quote)
+    return quote
 
 # Step 2: Download video from Pexels
 def download_video_from_pexels(query="nature"):
@@ -48,6 +51,7 @@ def download_video_from_pexels(query="nature"):
 
     return "background.mp4"
 
+# Pick random background music
 def pick_random_music(folder="music"):
     files = [f for f in os.listdir(folder) if f.endswith(".mp3")]
     if not files:
@@ -56,15 +60,16 @@ def pick_random_music(folder="music"):
     print("🎵 Selected local music:", choice)
     return choice
 
+# Add background music
 def add_background_music(clip, music_path):
     try:
-        audio = AudioFileClip(music_path).subclip(0, 60).volumex(0.2)
+        audio = AudioFileClip(music_path).subclip(0, 45).volumex(0.2)
         return clip.set_audio(audio)
     except Exception as e:
         print("⚠️ Failed to add music:", e)
         return clip
 
-# Step 4: Overlay quote
+# Overlay quote text
 def add_text_overlay(clip, quote):
     safe_quote = quote.encode("ascii", "ignore").decode()
     txt = TextClip(
@@ -79,24 +84,21 @@ def add_text_overlay(clip, quote):
     txt = txt.set_position(('center', 'center')).set_duration(clip.duration)
     return CompositeVideoClip([clip, txt])
 
-# Step 5: Generate full video
+# Main video generation
 def generate_video():
     quote = get_quote()
-    print("Quote:", quote)
+    print("📜 Quote:", quote)
 
     video_path = download_video_from_pexels("nature")
     clip = VideoFileClip(video_path).resize((1080, 1920), Image.Resampling.LANCZOS)
 
-    # 🔁 Trim last 0.2s to avoid flicker at loop point
-    safe_duration = min(clip.duration, 60)
+    # 🔁 Trim to safe duration and loop
+    safe_duration = min(clip.duration, 15)
     trimmed_clip = clip.subclip(0, safe_duration - 0.2)
+    looped_clip = fx_loop(trimmed_clip, duration=45)
 
-    looped_clip = fx_loop(trimmed_clip, duration=60)
-
-    # 📝 Add quote overlay
-    clip_with_text = add_text_overlay(looped_clip.set_duration(60), quote)
-
-    # 🎵 Pick and trim music to 60s
+    # 📝 Add text overlay and music
+    clip_with_text = add_text_overlay(looped_clip.set_duration(45), quote)
     music_path = pick_random_music("music")
     final_clip = add_background_music(clip_with_text, music_path)
 

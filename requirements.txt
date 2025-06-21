@@ -1,4 +1,7 @@
-moviepy
-Pillow
-requests
+moviepy==1.0.3
+Pillow==9.5.0
 certifi
+requests
+google-api-python-client
+google-auth
+google-auth-oauthlib

@@ -17,8 +17,6 @@ if platform.system() == "Windows":
 else:
     mpy_config.change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
 
-
-
 # Suppress warnings if using verify=False (TEMP)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -60,7 +58,7 @@ def pick_random_music(folder="music"):
 
 def add_background_music(clip, music_path):
     try:
-        audio = AudioFileClip(music_path).volumex(0.2)
+        audio = AudioFileClip(music_path).subclip(0, 60).volumex(0.2)
         return clip.set_audio(audio)
     except Exception as e:
         print("⚠️ Failed to add music:", e)
@@ -68,17 +66,14 @@ def add_background_music(clip, music_path):
 
 # Step 4: Overlay quote
 def add_text_overlay(clip, quote):
-    # 🔐 Strip non-ASCII characters to avoid ImageMagick failures
     safe_quote = quote.encode("ascii", "ignore").decode()
-
-    # ✅ Use safe method and font
     txt = TextClip(
         safe_quote,
         fontsize=50,
         color='white',
-        font="DejaVu-Sans",       # ✅ Safe font for GitHub Actions
+        font="DejaVu-Sans",
         size=(900, None),
-        method='caption',         # ✅ Use caption instead of label
+        method='caption',
         align='center'
     )
     txt = txt.set_position(('center', 'center')).set_duration(clip.duration)
@@ -90,14 +85,12 @@ def generate_video():
     print("Quote:", quote)
 
     video_path = download_video_from_pexels("nature")
+    clip = VideoFileClip(video_path).resize((1080, 1920), Image.Resampling.LANCZOS)
 
-    # Load and resize base video
-    base_clip = VideoFileClip(video_path).subclip(0, 15).resize((1080, 1920), Image.Resampling.LANCZOS)
+    # 🔁 Trim last 0.2s to avoid flicker at loop point
+    safe_duration = min(clip.duration, 60)
+    trimmed_clip = clip.subclip(0, safe_duration - 0.2)
 
-    # 🔁 Smooth loop: trim tiny bit to avoid repeated last frame
-    trimmed_clip = base_clip.subclip(0, base_clip.duration - 0.1)
-
-    # Loop cleanly to 60 seconds
     looped_clip = fx_loop(trimmed_clip, duration=60)
 
     # 📝 Add quote overlay
@@ -105,16 +98,12 @@ def generate_video():
 
     # 🎵 Pick and trim music to 60s
     music_path = pick_random_music("music")
-    audio = AudioFileClip(music_path).subclip(0, 60).volumex(0.2)
-
-    # 🔗 Combine audio + video
-    final_clip = clip_with_text.set_audio(audio)
+    final_clip = add_background_music(clip_with_text, music_path)
 
     # 💾 Export
     output_path = "short_quote.mp4"
     final_clip.write_videofile(output_path, fps=24, codec='libx264', audio_codec='aac')
     print(f"✅ Generated video: {output_path}")
-
 
 if __name__ == "__main__":
     generate_video()

@@ -8,7 +8,15 @@ import urllib3
 from moviepy.video.fx.all import loop as fx_loop
 from moviepy.editor import AudioFileClip
 import moviepy.config as mpy_config
-mpy_config.change_settings({"IMAGEMAGICK_BINARY": "C:/Program Files/ImageMagick-7.1.1-Q16/magick.exe"})
+import platform
+import moviepy.config as mpy_config
+
+# Set ImageMagick path based on OS
+if platform.system() == "Windows":
+    mpy_config.change_settings({"IMAGEMAGICK_BINARY": "C:/Program Files/ImageMagick-7.1.1-Q16/magick.exe"})
+else:
+    mpy_config.change_settings({"IMAGEMAGICK_BINARY": "/usr/bin/convert"})
+
 
 
 # Suppress warnings if using verify=False (TEMP)
@@ -60,7 +68,19 @@ def add_background_music(clip, music_path):
 
 # Step 4: Overlay quote
 def add_text_overlay(clip, quote):
-    txt = TextClip(quote, fontsize=50, color='white', size=(900, None), method='caption', align='center')
+    # 🔐 Strip non-ASCII characters to avoid ImageMagick failures
+    safe_quote = quote.encode("ascii", "ignore").decode()
+
+    # ✅ Use safe method and font
+    txt = TextClip(
+        safe_quote,
+        fontsize=50,
+        color='white',
+        font="DejaVu-Sans",       # ✅ Safe font for GitHub Actions
+        size=(900, None),
+        method='caption',         # ✅ Use caption instead of label
+        align='center'
+    )
     txt = txt.set_position(('center', 'center')).set_duration(clip.duration)
     return CompositeVideoClip([clip, txt])
 

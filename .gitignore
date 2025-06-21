@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# macOS & Linux
+.DS_Store
+Thumbs.db
+
+# Python cache
+*.log
+*.bak
+*.tmp
+
+# Video & audio output files
+*.mp4
+*.wav
+*.avi
+*.mov
+
+# OAuth secrets & credentials
+client_secret.json
+token.json
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# OS metadata
+*.swp
+*.swo
+
+# GitHub Actions secrets (if stored)
+secrets.json
+
+# pipenv
+Pipfile.lock
+
+# dotenv files
+.env

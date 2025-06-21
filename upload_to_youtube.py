@@ -4,8 +4,10 @@ import json
 import os
 
 # Load client credentials and token
-with open("client_secret.json") as f:
-    client_secrets = json.load(f)
+with open("client_secret.json", "r") as f:
+    content = f.read()
+    print(content)  # Debug only, don't use in production
+    client_secrets = json.loads(content)
 
 with open("token.json") as f:
     credentials_dict = json.load(f)

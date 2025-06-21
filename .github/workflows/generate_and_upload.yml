@@ -26,17 +26,17 @@ jobs:
           POLICY_FILE="/etc/ImageMagick-6/policy.xml"
           echo "🛠 Overwriting $POLICY_FILE with MoviePy-safe settings"
           sudo tee "$POLICY_FILE" > /dev/null <<EOF
-          <policymap>
-            <policy domain="resource" name="disk" value="2GiB"/>
-            <policy domain="resource" name="map" value="2048MiB"/>
-            <policy domain="resource" name="memory" value="1024MiB"/>
-            <policy domain="resource" name="area" value="256MP"/>
-            <policy domain="resource" name="width" value="32KP"/>
-            <policy domain="resource" name="height" value="32KP"/>
-            <!-- 🔓 Unblock @*, LABEL, CAPTION -->
-            <!-- nothing is blocked now -->
-          </policymap>
-          EOF
+<policymap>
+  <policy domain="resource" name="disk" value="2GiB"/>
+  <policy domain="resource" name="map" value="2048MiB"/>
+  <policy domain="resource" name="memory" value="1024MiB"/>
+  <policy domain="resource" name="area" value="256MP"/>
+  <policy domain="resource" name="width" value="32KP"/>
+  <policy domain="resource" name="height" value="32KP"/>
+  <!-- 🔓 All potential blocks removed -->
+</policymap>
+EOF
+
       - name: 📦 Install dependencies
         run: |
           sudo apt-get update
@@ -44,10 +44,10 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🔐 Restore YouTube API secrets
+      - name: 🔐 Restore YouTube API secrets from Base64
         run: |
-          echo "${{ secrets.CLIENT_SECRET }}" > client_secret.json
-          echo "${{ secrets.TOKEN_JSON }}" > token.json
+          echo "${{ secrets.CLIENT_SECRET_B64 }}" | base64 -d > client_secret.json
+          echo "${{ secrets.TOKEN_JSON_B64 }}" | base64 -d > token.json
 
       - name: 🧪 Check ImageMagick version
         run: convert --version
@@ -55,8 +55,9 @@ jobs:
       - name: 🕵️ Print active ImageMagick policies
         run: convert -list policy || echo "✅ No active policy blocks"
 
-      - name: 🎬 Generate video
-        run: python upload_to_youtube.py
+      - name: 🎬 Generate video (if needed)
+        run: python main.py
+        # 💡 Comment this out if you're using a prebuilt video file
 
       - name: ⬆️ Upload video to YouTube
         run: python upload_to_youtube.py

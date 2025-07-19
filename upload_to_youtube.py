@@ -22,7 +22,7 @@ credentials = Credentials(
 
 youtube = build("youtube", "v3", credentials=credentials)
 
-# === Detect quote from file or fallback ===
+# === Load quote from file ===
 quote_file = "quote.txt"
 if os.path.exists(quote_file):
     with open(quote_file, "r", encoding="utf-8") as f:
@@ -30,38 +30,46 @@ if os.path.exists(quote_file):
 else:
     quote_text = "Here’s your daily dose of inspiration! 💡"
 
+# === Try to extract author if format is "Quote — Author" ===
+if "—" in quote_text:
+    quote, author = quote_text.split("—", 1)
+    quote = quote.strip()
+    author = author.strip()
+else:
+    quote = quote_text
+    author = "Unknown"
+
+# === SEO Keywords and Hashtags ===
 today = datetime.now().strftime("%B %d, %Y")
+primary_keyword = "life changing quote"
+hook_phrase = "This quote will change your mindset 💭"
+hashtags = ["#shorts", "#motivation", "#quotes", "#inspiration", "#mindset", "#positivity"]
+youtube_channel = "https://www.youtube.com/@yourchannelname"
 
-# === SEO Optimized Fields ===
-primary_keyword = "motivational quote"
-secondary_keywords = ["daily quote", "shorts", "inspiration", "viral shorts"]
-hashtags = ["#shorts", "#motivation", "#quotes", "#inspiration", "#positivity"]
+# === SEO-Optimized Title and Description ===
+title = f"{hook_phrase} | #{primary_keyword.replace(' ', '')}"
+description = f"""✨ "{quote}" — {author}
 
-# === Metadata ===
-title = f"{quote_text[:80]} | {primary_keyword.title()} #{hashtags[0]}"
-description = f"""{quote_text}
+Start your day with powerful wisdom 💡
+🎯 Thought of the Day: {quote}
 
-🎯 Stay inspired every day with a new {primary_keyword}.
-🧠 Thought of the Day: {quote_text}
-
-📌 Related Topics: {', '.join(secondary_keywords)}
+👉 Subscribe for more inspiring content: {youtube_channel}
+💬 What does this quote mean to you? Share your thoughts below!
 📅 Uploaded on: {today}
 
-💬 What does this quote mean to you? Comment your thoughts below!
-🔔 Subscribe for daily content that lifts your mindset and day!
-
-👉 More content at: https://www.youtube.com/@yourchannelname
+📌 Topics: {primary_keyword}, motivation, daily quote, mindset, growth, inspiration
 
 {" ".join(hashtags)}
 """
 
+# === Tags ===
 tags = [
-    "shorts", "quotes", "motivationalquotes", "lifelessons", "positivity",
-    "selfimprovement", "dailyquotes", "successquotes", "quoteoftheday",
-    "mindset", "motivation", "inspiration", "selfgrowth", "wisewords",
-    "goodvibes", "wordsoftheday", "selflove", "selfcare", "growthmindset", "viralshorts"
+    "shorts", "life changing quote", "quote of the day", "motivational shorts",
+    "inspirational shorts", "daily quotes", "mindset shift", "motivationalquote",
+    "positivity", "self improvement", "wisdom", "viralshorts", "success", "growth", "selfcare"
 ]
 
+# === Video Metadata ===
 video_metadata = {
     "snippet": {
         "title": title,
@@ -79,7 +87,7 @@ video_file = "short_quote.mp4"
 if not os.path.exists(video_file):
     raise FileNotFoundError(f"❌ Video file not found: {video_file}")
 
-# Rename file for SEO
+# Rename video file with SEO keywords
 seo_filename = f"{primary_keyword.replace(' ', '_')}_{today.replace(' ', '_')}.mp4"
 os.rename(video_file, seo_filename)
 

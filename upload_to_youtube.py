@@ -23,7 +23,7 @@ credentials = Credentials(
 youtube = build("youtube", "v3", credentials=credentials)
 
 # === Detect quote from file or fallback ===
-quote_file = "quote.txt"  # Optional: main.py can save quote to this
+quote_file = "quote.txt"
 if os.path.exists(quote_file):
     with open(quote_file, "r", encoding="utf-8") as f:
         quote_text = f.read().strip()
@@ -32,15 +32,27 @@ else:
 
 today = datetime.now().strftime("%B %d, %Y")
 
+# === SEO Optimized Fields ===
+primary_keyword = "motivational quote"
+secondary_keywords = ["daily quote", "shorts", "inspiration", "viral shorts"]
+hashtags = ["#shorts", "#motivation", "#quotes", "#inspiration", "#positivity"]
+
 # === Metadata ===
-title = f"🌟 {quote_text[:80]} | #Shorts"
+title = f"{quote_text[:80]} | {primary_keyword.title()} #{hashtags[0]}"
 description = f"""{quote_text}
 
-🎯 Stay inspired every day with a new quote.
-💬 What does this quote mean to you? Comment below!
+🎯 Stay inspired every day with a new {primary_keyword}.
+🧠 Thought of the Day: {quote_text}
 
-👉 Subscribe for more daily motivation.
-#motivation #quotes #shorts #inspiration #positivity #mindset
+📌 Related Topics: {', '.join(secondary_keywords)}
+📅 Uploaded on: {today}
+
+💬 What does this quote mean to you? Comment your thoughts below!
+🔔 Subscribe for daily content that lifts your mindset and day!
+
+👉 More content at: https://www.youtube.com/@yourchannelname
+
+{" ".join(hashtags)}
 """
 
 tags = [
@@ -67,7 +79,11 @@ video_file = "short_quote.mp4"
 if not os.path.exists(video_file):
     raise FileNotFoundError(f"❌ Video file not found: {video_file}")
 
-media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype="video/*")
+# Rename file for SEO
+seo_filename = f"{primary_keyword.replace(' ', '_')}_{today.replace(' ', '_')}.mp4"
+os.rename(video_file, seo_filename)
+
+media = MediaFileUpload(seo_filename, chunksize=-1, resumable=True, mimetype="video/*")
 upload_request = youtube.videos().insert(
     part="snippet,status",
     body=video_metadata,
